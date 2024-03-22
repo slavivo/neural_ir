@@ -49,6 +49,26 @@ def get_page(url):
         return None
     
 
+def get_all_types(page_content):
+    '''
+    This function is used to get all the types of products (chairs) from the page content.
+    
+    Parameters:
+    page_content (bytes): The page content of the given url.
+    
+    Returns:
+    list: The list of types of products.
+    '''
+    try:
+        soup = BeautifulSoup(page_content, 'html.parser')
+        types = [a['href'] for a in soup.find_all('a', class_='c-categories-list__link', href=True)]
+        return types
+    except Exception as e:
+        logger.error(f'Error occured while getting all the types of products')
+        logger.error(f'Error: {e}')
+        return None
+    
+
 def get_product_links(page_content):
     '''
     This function is used to get the product links from the page content.
@@ -99,6 +119,27 @@ def get_product_details(page_content):
         return None
     
 
+def get_pagination_links(page_content, url):
+    '''
+    This function is used to get the pagination links from the page content.
+
+    Parameters:
+    page_content (bytes): The page content of the given url.
+
+    Returns:
+    list: The list of pagination links.
+    '''
+    try:
+        soup = BeautifulSoup(page_content, 'html.parser')
+        max_page = max([int(a.text) for a in soup.find_all('a', class_='c-pagination__link-to-page', href=True) if a.text != ''])
+        pagination_links = [url + f'?f={i}' for i in range(1, max_page + 1)]
+        return pagination_links
+    except Exception as e:
+        logger.error(f'Error occured while getting the pagination links')
+        logger.error(f'Error: {e}')
+        return None
+    
+
 def save_to_csv(data, file_path):
     '''
     This function is used to save the data to a csv file.
@@ -120,19 +161,20 @@ def save_to_csv(data, file_path):
         return None
     
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
-    args = parser.parse_args()
+def crawl_by_pagination(url):
+    '''
+    This function is used to crawl the data by pagination and save it to .csv.
 
-    if args.debug:
-        logger.setLevel(logging.DEBUG)
-        
+    Parameters:
+    url (str): The url of the pagination.
+
+    Returns:
+    None
+    '''
     try:
-        logger.info('Crawling the data from the website...')
-        page_content = get_page(base_url)
+        page_content = get_page(url)
         if page_content:
-            logger.info('Data crawled successfully, extracting the product links...')
+            logger.info(f'Pagination page content for {url} extracted successfully, extracting the product links...')
             product_links = get_product_links(page_content)
             if product_links:
                 data = []
@@ -147,7 +189,59 @@ def main():
                         if product_details:
                             data.append(product_details)
                 if data:
-                    save_to_csv(data, output_file)
+                    save_to_csv(data, os.path.join(output_path, url.split('/')[-2] + '.csv'))
+    except Exception as e:
+        logger.error(f'Error occured while crawling the data by pagination')
+        logger.error(f'Error: {e}')
+        return None
+
+
+def crawl_by_type(url):
+    '''
+    This function is used to crawl the data by type of products and save it to .csv.
+
+    Parameters:
+    url (str): The url of the type of products.
+
+    Returns:
+    None
+    '''
+    try:
+        page_content = get_page(url)
+        if page_content:
+            logger.info('Product page content extracted successfully, extracting the pagination links...')
+            pagination_links = get_pagination_links(page_content, url)
+            if pagination_links:
+                logger.info('Pagination links extracted successfully, extracting the product links...')
+                for link in pagination_links:
+                    time.sleep(random.randint(1, 3))
+                    crawl_by_pagination(link)
+    except Exception as e:
+        logger.error(f'Error occured while crawling the data by type of products')
+        logger.error(f'Error: {e}')
+        return None
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
+    args = parser.parse_args()
+
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+        
+    try:
+        logger.info('Crawling the data from the website...')
+        page_content = get_page(base_url)
+        if page_content:
+            logger.info('Data crawled successfully, extracting the types of products...')
+            types = get_all_types(page_content)
+            if types:
+                logger.debug(f'Types of products: {types}')    
+                logger.info('All type link extracted succesfully, extracting the product links...')
+                for t in types:
+                    time.sleep(random.randint(1, 3))
+                    crawl_by_type(t)
     except Exception as e:
         logger.error(f'Error occured while crawling the data from the website')
         logger.error(f'Error: {e}')
