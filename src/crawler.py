@@ -163,7 +163,7 @@ def save_to_csv(data, file_path):
 
 def crawl_by_pagination(url):
     '''
-    This function is used to crawl the data by pagination and save it to .csv.
+    This function is used to crawl the data by pagination and return data.
 
     Parameters:
     url (str): The url of the pagination.
@@ -188,8 +188,7 @@ def crawl_by_pagination(url):
                         logger.debug(f'Product details: {product_details}')
                         if product_details:
                             data.append(product_details)
-                if data:
-                    save_to_csv(data, os.path.join(output_path, url.split('/')[-2] + '.csv'))
+                return data
     except Exception as e:
         logger.error(f'Error occured while crawling the data by pagination')
         logger.error(f'Error: {e}')
@@ -213,9 +212,14 @@ def crawl_by_type(url):
             pagination_links = get_pagination_links(page_content, url)
             if pagination_links:
                 logger.info('Pagination links extracted successfully, extracting the product links...')
+                data = []
                 for link in pagination_links:
                     time.sleep(random.randint(1, 3))
-                    crawl_by_pagination(link)
+                    pag_data = crawl_by_pagination(link)
+                    if pag_data:
+                        data.extend(pag_data)
+                if data:
+                    save_to_csv(data, os.path.join(output_path, url.split('/')[-2] + '.csv'))
     except Exception as e:
         logger.error(f'Error occured while crawling the data by type of products')
         logger.error(f'Error: {e}')
@@ -239,6 +243,8 @@ def main():
             if types:
                 logger.debug(f'Types of products: {types}')    
                 logger.info('All type link extracted succesfully, extracting the product links...')
+                # TODO - Comment the below line to extract all the data
+                types = types[:1]
                 for t in types:
                     time.sleep(random.randint(1, 3))
                     crawl_by_type(t)
