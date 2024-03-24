@@ -4,7 +4,11 @@ results (items from heureka) from a neural network model.
 '''
 
 import tkinter
-from inference import get_search_results
+from inference import Inference
+import logging 
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class App:
     def __init__(self, root):
@@ -29,10 +33,12 @@ class App:
 
     def search(self):
         query = self.query.get()
-        search_results = get_search_results(query)
+        logger.info(f'Searching for the query: {query}')
+        search_results = inference.get_search_results(query)
         self.results.set(search_results)
 
 if __name__ == "__main__":
+    inference = Inference(embed_file='kancelarska-kresla_embeddings.npy')
     root = tkinter.Tk()
     app = App(root)
     root.mainloop()
