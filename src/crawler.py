@@ -112,6 +112,8 @@ def get_product_details(page_content):
         specification = soup.find('div', class_='c-editable-content c-editable-content--specification')
         specification = specification.find('p') if specification else None
         product_details['specification'] = specification.text if specification else None
+        image_link = soup.find('img', class_='c-gallery-open__thumbnail')
+        product_details['image_link'] = image_link['src'] if image_link else None
         return product_details
     except Exception as e:
         logger.error(f'Error occured while getting the product details')
@@ -244,7 +246,7 @@ def main():
                 logger.debug(f'Types of products: {types}')    
                 logger.info('All type link extracted succesfully, extracting the product links...')
                 # TODO - Comment the below line to extract all the data
-                types = types[:1]
+                # types = types[:1]
                 for t in types:
                     time.sleep(random.randint(1, 3))
                     crawl_by_type(t)

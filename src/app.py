@@ -19,17 +19,21 @@ class App:
         self.query = tkinter.StringVar()
         self.results = tkinter.StringVar()
 
-        self.label = tkinter.Label(self.root, text="Enter a query:")
-        self.label.pack()
+        self.label = tkinter.Label(self.root, text="Enter a query:", font=('Arial', 20))
+        self.label.grid(row=0, column=0, sticky='W')
 
-        self.entry = tkinter.Entry(self.root, textvariable=self.query)
-        self.entry.pack()
+        self.entry = tkinter.Entry(self.root, textvariable=self.query, font=('Arial', 20))
+        self.entry.grid(row=1, column=0, sticky='WE')  # Fill horizontally
 
-        self.button = tkinter.Button(self.root, text="Search", command=self.search)
-        self.button.pack()
+        self.button = tkinter.Button(self.root, text="Search", command=self.search, font=('Arial', 20))
+        self.button.grid(row=2, column=0)
 
-        self.listbox = tkinter.Listbox(self.root, listvariable=self.results)
-        self.listbox.pack()
+        self.listbox = tkinter.Listbox(self.root, listvariable=self.results, font=('Arial', 20))
+        self.listbox.grid(row=3, column=0, sticky='NSEW')  # Fill both horizontally and vertically
+
+        # Configure the grid to expand properly
+        self.root.grid_rowconfigure(3, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
 
     def search(self):
         query = self.query.get()

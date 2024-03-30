@@ -30,19 +30,36 @@ def embed_df(df, model):
     numpy.ndarray: The numpy array containing the embeddings of the text data.
     '''
 
+    try:
+        df['name'] = df['name'].astype(str)
+        df['specification'] = df['specification'].astype(str)
+        df['image_link'] = df['image_link'].astype(str)
 
-    def categorize_price(price):
-        if price <= 1000:
-            return 'hodně levné'
-        elif price <= 5000:
-            return 'levné'
-        elif price <= 10000:
-            return 'drahé'
-        else:
+        df['price'] = df['price'].astype(float)
+        df['rating'] = df['rating'].astype(float)
+
+        max_price = df['price'].max()
+        min_price = df['price'].min()
+    except Exception as e:
+        logger.error('Error in converting the data types.')
+        logger.error(f'Error: {e}')
+        sys.exit(1)
+
+    range_price = (max_price - min_price) / 4
+    boundaries = [min_price, min_price + range_price, min_price + 2 * range_price, min_price + 3 * range_price, max_price]
+
+    def categorize_price(price, boundaries):
+        if price > boundaries[-1]:
             return 'velmi drahé'
+        elif price > boundaries[-2]:
+            return 'drahé'
+        elif price > boundaries[-3]:
+            return 'levné'
+        else:
+            return 'hodně levné'
     try:
         sep_token = '###'
-        df['price_cat'] = df['price'].apply(categorize_price)
+        df['price_cat'] = df['price'].apply(categorize_price, boundaries=boundaries)
         df['to_embed'] = 'Jméno: ' + df['name'] + sep_token + ' Cena: ' + df['price_cat'] + sep_token + ' Popis: ' + df['specification']
         to_embed = df['to_embed'].tolist()[:50] # TODO remove the slicing
 
